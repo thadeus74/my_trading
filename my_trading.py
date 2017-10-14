@@ -3,15 +3,19 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-# use init() function after importing the module
+### v0.2 - 2017-10-14
+
+# use init() function after importing the module, to retrieve currencies and portfolio
+# use add_entry_to_ledger() function to populate the ledger
 
 ### Functions to be developed:
-### composition_of_portfolio (takes coin in portfolio, makes balance with euro eq,
-### then uses it as a percentage of the toatl value in euro of the portfolio)
 ###
-### save portofolio values
+### function to generate upadted portfolio starting from
+###
 ### store temporary data in global variables, such as current and
 ### previous exchange rates, trends
+### add an API key to retrieve info
+###
 
 ### add a movement to the ledger
 ### save a ledger
@@ -48,8 +52,8 @@ preferred = ['BTC', 'XMR', 'LTC', 'XRP', 'DASH', 'BCC', 'ETH'] # first coin must
 portfolio = [] # stores a list of [coin, amount, rate, euroeq, percentage_of_portfolio]
 portfolio_total = 0 # stores the total amount of the porfolio in EUR
 ledger = [] # stores a list of movements
-# format of ledger: [[FROM, AMOUNT, TO, AMOUNT, PAIR, RATE, DATE
-# e.g. [['EUR', -97.30, XMR, 1.00, XMR/EUR, 97.04, 12/09/2017] [...]]
+# format of ledger: [[COIN, AMOUNT, RATE, DATE] [...]]
+# e.g. [['EUR', -97.30, 1.00, '12/09/2017'] [...]]
 debug_verbose = False # change to True to print some debug info when running the functions
 
 ### imports a list of currency codes and names traded in bittrex portal
@@ -433,7 +437,9 @@ def read_portfolio(verbose = 'yes_print'):
     print('Portfolio read from {0}.'.format(filename));
 
 def print_balance(update = True):
-    """Print balance of portfolio, based in Euro"""
+    """Print balance of portfolio, based in Euro.
+    update = True to retrieve updated exchange rates,
+    update = False to use stored exchange rates."""
     # variables
     global portfolio
     global portfolio_total
@@ -451,7 +457,7 @@ def print_balance(update = True):
         euroeq = amount * rate
         row[3] = euroeq
         portfolio_total = portfolio_total + euroeq
-    print('Portfolio:\nCoin  - Name         |   Amount   |   Rate     |   Trend | Euro eq.| % of Portfolio')
+    print('Portfolio Balance:\nCoin  - Name         |   Amount   |   Rate    |   Trend | Euro eq.| % of Portfolio')
     for row in portfolio:
         coin = row[0]
         amount = row[1]
@@ -459,7 +465,7 @@ def print_balance(update = True):
         euroeq = row[3]
         perc_of_portfolio = euroeq / portfolio_total
         row[4] = perc_of_portfolio
-        print('{0:6}- {1:13}| {2:10.5f} | {3:10.5f} | {4:>+8.2%}| {5:7.2f} | {6:>5.1%}'
+        print('{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| {5:7.2f} | {6:>5.1%}'
               .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio))
     print('Total: {0:7.2f} Euro'.format(portfolio_total))
     save_portfolio()
@@ -473,7 +479,16 @@ def add_entry_to_ledger(coin, amount, rate, date = ''):
     ### ledger.csv format: coin, amount, rate, date
     with open(filename, 'a', newline = '') as csvfile :
         spamwriter = csv.writer(csvfile)
-        spamwriter.writerow([coin, amount, rate, date])
+        spamwriter.writerow([coin.upper(), amount, rate, date])
     print('Added entry to {0}.'.format(filename));
     
-    
+def read_ledger():
+    """Read ledger from ledger.csv"""
+    # variables
+    filename = 'ledger.csv'
+    ### ledger.csv format: coin, amount, rate, date
+    with open(filename, 'r', newline = '') as csvfile:
+        spamreader = csv.reader(csvfile)
+        for row in spamreader:
+            a = row[0:1]+[eval(row[1])]+[eval(row[2])]+[row[3]]
+            ledger.append(a)
