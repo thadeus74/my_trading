@@ -12,3 +12,7 @@ Functions are of different kind:
 - read (from file)
 - save (to file)
 - others (such as those to compute trends)
+
+How to use it:
+- use init() after importing the module, in order to read the codes and names of the currencies.
+
