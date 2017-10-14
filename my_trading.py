@@ -12,13 +12,13 @@
 ###
 ### function to generate upadted portfolio starting from
 ###
+### try except for read_portfolio 
+###
 ### store temporary data in global variables, such as current and
 ### previous exchange rates, trends
 ### add an API key to retrieve info
 ###
 
-### add a movement to the ledger
-### save a ledger
 
 ### Functions are of different kind:
 ### get (from internet), print (to screen), read (from file), save (to file)
@@ -445,7 +445,10 @@ def print_balance(update = True):
     global portfolio_total
     portfolio_total = 0
     if portfolio == []:
-        read_portfolio('no_print')
+        try :
+            read_portfolio('no_print')
+        except :
+            print('No portfolio present yet.')
     # this first iteration is to compute portofolio_total, which will be used later to compute percentage
     for row in portfolio:
         coin = row[0]
