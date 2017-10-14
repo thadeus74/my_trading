@@ -3,7 +3,7 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.2 - 2017-10-14
+### v0.3 - 2017-10-14
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
