@@ -3,22 +3,19 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.3 - 2017-10-14
+### v0.4 - 2017-10-15
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
+# use update_portfolio() function to update the portfolio, based on the ledger
 
 ### Functions to be developed:
 ###
-### function to generate upadted portfolio starting from
-###
-### try except for read_portfolio 
+### automatically update the portfolio each entry added to the ledger
 ###
 ### store temporary data in global variables, such as current and
 ### previous exchange rates, trends
 ### add an API key to retrieve info
-###
-
 
 ### Functions are of different kind:
 ### get (from internet), print (to screen), read (from file), save (to file)
@@ -27,6 +24,8 @@
 # from https://www.coindesk.com/api/
 # https://api.coindesk.com/v1/bpi/historical/close.json?currency=EUR&for=yesterday
 # returns Bitcoin Price Index (bpi) in Euro in this format: {"bpi":{"2017-10-11":4073.0026},"discl...
+# https://api.coindesk.com/v1/bpi/historical/close.json?currency=EUR&start=2017-10-11&end=2017-10-11
+# returns the value for a specific date
 #
 # from https://www.bittrex.com/Home/Api
 # https://bittrex.com/api/v1.1/public/getmarketsummary?market=btc-xmr
@@ -44,16 +43,15 @@ import time
 import datetime
 
 ### variables defined here
-currency_rates = [] # stores rows of rates to be saved
-# format of currency_rates: [[r_coin, m_coin, eurbtc, current_date, current_time]]
-currency_pairs = [] # stores pairs of coin codes and names
-currency_codes = [] # stores coin codes
 preferred = ['BTC', 'XMR', 'LTC', 'XRP', 'DASH', 'BCC', 'ETH'] # first coin must be 'BTC'
-portfolio = [] # stores a list of [coin, amount, rate, euroeq, percentage_of_portfolio]
+# note that the codes are taken from bittrex, so Bitcoin is BTC and Bitcoin Cash is BCC
+currency_rates = [] # stores rows of rates to be saved, format: [[r_coin, m_coin, eurbtc, current_date, current_time], ...]
+currency_pairs = [] # stores pairs of coin codes and names, format: [[coin_code, coin_name], ...]
+currency_codes = [] # stores coin codes, format:[coin1, coin2, ...]
+portfolio = [] # stores a list of coins in the portfolio, format: [[coin, amount, rate, euroeq, percentage_of_portfolio], ...]
 portfolio_total = 0 # stores the total amount of the porfolio in EUR
-ledger = [] # stores a list of movements
-# format of ledger: [[COIN, AMOUNT, RATE, DATE] [...]]
-# e.g. [['EUR', -97.30, 1.00, '12/09/2017'] [...]]
+ledger = [] # stores a list of movements, format: [[COIN, AMOUNT, RATE, DATE], ...]
+# e.g. [['EUR', -97.30, 1.00, '12/09/2017'], ...]
 debug_verbose = False # change to True to print some debug info when running the functions
 
 ### imports a list of currency codes and names traded in bittrex portal
@@ -389,19 +387,6 @@ def print_currencies_trend():
         i = row[0]
         print('{0:6} - {1:20}: {2:>+7.2%}'.format(i, currency_name(i), trend(i)));
   
-def init():
-    """Initialize the module variables"""
-    get_currency_pairs()
-    print_balance(True)
-
-def daily_routine():
-    """Performs a serie of functions togheter, for a daily routine"""
-    init()
-    get_currency_rates()
-    save_rates()
-    read_rates()
-    show_historical('BTC')
-    
 def save_portfolio():
     """Save portfolio in portfolio.csv file"""
     # variables
@@ -488,6 +473,8 @@ def add_entry_to_ledger(coin, amount, rate, date = ''):
 def read_ledger():
     """Read ledger from ledger.csv"""
     # variables
+    global ledger
+    ledger = []
     filename = 'ledger.csv'
     ### ledger.csv format: coin, amount, rate, date
     with open(filename, 'r', newline = '') as csvfile:
@@ -495,3 +482,40 @@ def read_ledger():
         for row in spamreader:
             a = row[0:1]+[eval(row[1])]+[eval(row[2])]+[row[3]]
             ledger.append(a)
+
+def update_portfolio():
+    """Update portfolio using ledger entries"""
+    if input('This operation will overwrite all previous data stored in portfolio.csv. Ok (y/n)?') == 'n':
+        print ('Portfolio not updated.')
+        return;
+    global portfolio
+    portfolio = []
+    for rowl in ledger:
+        # portfolio format: [coin, amount, rate, euroeq, percentage_of_portfolio]
+        # ledger format: [coin, amount, rate, date]
+        # find the correct item in portfolio
+        coin = rowl[0]
+        found = False
+        for rowp in portfolio:
+            if rowp[0] == coin:
+                found = True
+                # update the item in portfolio
+                rowp[1] = rowp[1] + rowl[1]
+        if found == False:
+            portfolio.append(rowl[0:2]+[0,0,0])
+    save_portfolio()
+    
+def init():
+    """Initialize the module variables"""
+    get_currency_pairs()
+    print_balance(True)
+
+def daily_routine():
+    """Performs a serie of functions togheter, for a daily routine"""
+    init()
+    get_currency_rates()
+    save_rates()
+    read_rates()
+    show_historical('BTC')
+    
+    
