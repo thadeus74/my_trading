@@ -3,15 +3,13 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.4 - 2017-10-15
+### v0.5 - 2017-10-15
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
 # use update_portfolio() function to update the portfolio, based on the ledger
 
 ### Functions to be developed:
-###
-### automatically update the portfolio each entry added to the ledger
 ###
 ### store temporary data in global variables, such as current and
 ### previous exchange rates, trends
@@ -283,10 +281,12 @@ def currency_name(code):
 	return 'No match';
 
 def print_preferred_coins():	
-	"""Print a list of preferred currencies in a code name pair"""
-	global preferred
-	for i in preferred:
-		print('{0:6} - {1:20}'.format(i, currency_name(i)));
+    """Print a list of preferred currencies in a code name pair"""
+    global preferred
+    output = ''
+    for i in preferred:
+        output = output + '{0:6} - {1:20}\n'.format(i, currency_name(i))
+    print(output);
 
 def save_rates(coin1 = None, coin2 = None, wa = 'a'):
     """Save currency rates retrived with .get_currency_rates() function in a csv file"""
@@ -374,18 +374,20 @@ def print_preferred_trend():
     """print the trend of preferred currencies"""
     ### variables
     global preferred
-    print('Trend of the preferred currencies')
+    output = 'Trend of the preferred currencies:\nCoin   - Name         |   Trend'
     for i in preferred:
-        print('{0:6} - {1:20}: {2:>+7.2%}'.format(i, currency_name(i), trend(i)));
+        output = output + '{0:6} - {1:13}: {2:>+7.2%}\n'.format(i, currency_name(i), trend(i))
+    print(output)
 
 def print_currencies_trend():
     """print the trend of the currencies being retrieved"""
     ### variables
     global currency_rates
-    print('Trend of the currencies being retrieved')
+    output = 'Trend of the currencies being retrieved:\nCoin   - Name         |   Trend'
     for row in currency_rates:
         i = row[0]
-        print('{0:6} - {1:20}: {2:>+7.2%}'.format(i, currency_name(i), trend(i)));
+        output = output + '{0:6} - {1:13}: {2:>+7.2%}\n'.format(i, currency_name(i), trend(i))
+    print(output)
   
 def save_portfolio():
     """Save portfolio in portfolio.csv file"""
@@ -407,7 +409,7 @@ def read_portfolio(verbose = 'yes_print'):
     filename = 'portfolio.csv'
     ### portfolio.csv format: coin, amount, rate, euroeq, perc_of_portfolio
     if verbose == 'yes_print':
-        print('Portfolio:\nCoin   - Name          |   Amount')
+        print('Portfolio:\nCoin   - Name         |   Amount')
     with open(filename, 'r', newline = '') as csvfile:
         spamreader = csv.reader(csvfile)
         for row in spamreader:
@@ -418,7 +420,7 @@ def read_portfolio(verbose = 'yes_print'):
             perc_of_portfolio = eval(row[4])
             portfolio.append([coin, amount, rate, euroeq, perc_of_portfolio])
             if verbose == 'yes_print':
-                print('{0:6} - {1:14}| {2:10.5f}'.format(coin, currency_name(coin), amount))
+                print('{0:6} - {1:13}| {2:10.5f}'.format(coin, currency_name(coin), amount))
     print('Portfolio read from {0}.'.format(filename));
 
 def print_balance(update = True):
@@ -445,7 +447,8 @@ def print_balance(update = True):
         euroeq = amount * rate
         row[3] = euroeq
         portfolio_total = portfolio_total + euroeq
-    print('Portfolio Balance:\nCoin  - Name         |   Amount   |   Rate    |   Trend | Euro eq.| % of Portfolio')
+    output = 'Portfolio Balance:\n'
+    output = output + 'Coin  - Name         |   Amount   |   Rate    |   Trend | Euro eq.| Port.%\n'
     for row in portfolio:
         coin = row[0]
         amount = row[1]
@@ -453,9 +456,10 @@ def print_balance(update = True):
         euroeq = row[3]
         perc_of_portfolio = euroeq / portfolio_total
         row[4] = perc_of_portfolio
-        print('{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| {5:7.2f} | {6:>5.1%}'
-              .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio))
-    print('Total: {0:7.2f} Euro'.format(portfolio_total))
+        output = output + '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| {5:7.2f} | {6:>5.1%}\n' \
+              .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio)
+    output = output + 'Total: {0:7.2f} Euro\n'.format(portfolio_total)
+    print(output)
     save_portfolio()
 
 def add_entry_to_ledger(coin, amount, rate, date = ''):
@@ -465,10 +469,12 @@ def add_entry_to_ledger(coin, amount, rate, date = ''):
     if date == '':
         date = datetime.date.today().isoformat()
     ### ledger.csv format: coin, amount, rate, date
+    rowl = [coin.upper(), amount, rate, date]
     with open(filename, 'a', newline = '') as csvfile :
         spamwriter = csv.writer(csvfile)
-        spamwriter.writerow([coin.upper(), amount, rate, date])
+        spamwriter.writerow(rowl)
     print('Added entry to {0}.'.format(filename));
+    update_portfolio(rowl, False)
     
 def read_ledger():
     """Read ledger from ledger.csv"""
@@ -482,17 +488,32 @@ def read_ledger():
         for row in spamreader:
             a = row[0:1]+[eval(row[1])]+[eval(row[2])]+[row[3]]
             ledger.append(a)
+    print('Ledger read from {0}.'.format(filename))
 
-def update_portfolio():
+def update_portfolio(single_entry = None, confirm_write = False):
     """Update portfolio using ledger entries"""
-    if input('This operation will overwrite all previous data stored in portfolio.csv. Ok (y/n)?') == 'n':
-        print ('Portfolio not updated.')
-        return;
+    # portfolio format: [coin, amount, rate, euroeq, percentage_of_portfolio]
+    # ledger format: [coin, amount, rate, date]
+    if confirm_write:
+        if input('This operation will overwrite all previous data stored in portfolio.csv. Ok (y/n)?') == 'n':
+            print ('Portfolio not updated.')
+            return;
     global portfolio
-    portfolio = []
-    for rowl in ledger:
-        # portfolio format: [coin, amount, rate, euroeq, percentage_of_portfolio]
-        # ledger format: [coin, amount, rate, date]
+    if single_entry == None:
+        portfolio = []
+        for rowl in ledger:
+            # find the correct item in portfolio
+            coin = rowl[0]
+            found = False
+            for rowp in portfolio:
+                if rowp[0] == coin:
+                    found = True
+                    # update the item in portfolio
+                    rowp[1] = rowp[1] + rowl[1]
+            if found == False:
+                portfolio.append(rowl[0:2]+[0,0,0])
+    else:
+        rowl = single_entry
         # find the correct item in portfolio
         coin = rowl[0]
         found = False
@@ -506,8 +527,10 @@ def update_portfolio():
     save_portfolio()
     
 def init():
-    """Initialize the module variables"""
+    """Initialize the module variables, read ledger, read portfolio and print balance"""
     get_currency_pairs()
+    read_ledger()
+    read_portfolio('no_print')
     print_balance(True)
 
 def daily_routine():
