@@ -1,0 +1,19 @@
+# Useful information to retrieve live information from internet websites
+
+# scripts and info that can help:
+
+- From https://www.coindesk.com/api/
+-- https://api.coindesk.com/v1/bpi/historical/close.json?currency=EUR&for=yesterday
+ returns Bitcoin Price Index (bpi) in Euro in this format: 
+ {"bpi":{"2017-10-11":4073.0026},"discl...
+
+ -- https://api.coindesk.com/v1/bpi/historical/close.json?currency=EUR&start=2017-10-11&end=2017-10-11
+ returns the value for a specific date (use the same start and end) in this format:
+ {"bpi":{"2017-10-10":4026.5737,"2017-10-11":4073.0026},"disclaimer":"This data was produced from the CoinDesk Bitcoin Price Index. BPI value data returned as EUR.","time":{"updated":"Oct 12, 2017 00:03:00 UTC","updatedISO":"2017-10-12T00:03:00+00:00"}}
+
+---
+- From https://www.bittrex.com/Home/Api
+
+-- https://bittrex.com/api/v1.1/public/getmarketsummary?market=btc-xmr
+ returns exchange rate in this format:
+ {"success":true,"message":"","result":[{"MarketName":"BTC-XMR","High":0.01841175,"Low":0.01690000, "Volume":10790.29465211,"Last":0.01696032,"BaseVolume":192.99894272, "TimeStamp":"2017-10-12T10:06:43.403","Bid":0.01694034,"Ask":0.01696032,"OpenBuyOrders":1039, "OpenSellOrders":6878,"PrevDay":0.01815932,"Created":"2014-06-04T07:38:39.24"}]}
