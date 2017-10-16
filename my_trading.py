@@ -417,13 +417,14 @@ def print_balance(update = True, log_output = False):
     # variables
     global portfolio
     global portfolio_total
-    portfolio_total = 0
+    output = heading('Portfolio Balance')
     if portfolio == []:
         try :
             read_portfolio('no_print')
         except :
             print('No portfolio present yet.')
     # this first iteration is to compute portofolio_total, which will be used later to compute percentage
+    portfolio_total = 0
     for row in portfolio:
         coin = row[0]
         amount = row[1]
@@ -434,7 +435,6 @@ def print_balance(update = True, log_output = False):
         euroeq = amount * rate
         row[3] = euroeq
         portfolio_total = portfolio_total + euroeq
-    output = 'Portfolio Balance:\n'
     output = output + 'Coin  - Name         |   Amount   |   Rate    |   Trend |  Equiv.    | Port.%\n'
     for row in portfolio:
         coin = row[0]
@@ -518,24 +518,6 @@ def update_portfolio(single_entry = None, confirm_write = False):
             portfolio.append(rowl[0:2]+[0,0,0])
     save_portfolio()
     
-def init():
-    """Initialize the module variables, read ledger, read portfolio and print balance"""
-    get_currency_pairs()
-    global ledger
-    try :
-        read_ledger()
-    except :
-        print('No ledger present yet.')
-    print_balance(True)
-
-def daily_routine():
-    """Performs a serie of functions togheter, for a daily routine"""
-    init()
-    get_currency_rates()
-    save_rates()
-    read_rates()
-    show_historical('BTC')
-
 def analyze_positions(summary = 'collapsed', log_output = False):
     """Analize the open and closed positions in the portfolio"""
     # this first version is 'collapsed' and computes a sum of all the entries
@@ -547,7 +529,7 @@ def analyze_positions(summary = 'collapsed', log_output = False):
     # analysis format: [coin, amount, euroeq, date]
     global portfolio
     global ledger
-    output = ''
+    output = heading('Analysis of positions')
     analysis = []
     for rowl in ledger:
         coin = rowl[0]
@@ -563,7 +545,7 @@ def analyze_positions(summary = 'collapsed', log_output = False):
         if found == False:
             analysis.append(rowl[0:2]+[rowl[1] * rowl[2]] + [rowl[3]])
     # first ouput closed positions
-    output = 'Closed positions:\n'
+    output = output + 'Closed positions:\n'
     output = output + 'Coin  - Name         |   Closed   |   P/L \n'
     for rowa in analysis:
         if rowa[1] == 0:
@@ -581,4 +563,30 @@ def analyze_positions(summary = 'collapsed', log_output = False):
     if log_output :
         with open("Output.txt", "a") as text_file:
             text_file.write(output)
+    
+def heading(text, heading_level = 1, length = 40):
+    """Print a text formatted as a specific heading"""
+    ### currently implemented heading level 1 only
+    output = '┌' + '-' * (length - 2) + '┐\n'
+    output = output + '| ' + text + ' ' * (length - len(text) - 3) + '|\n'
+    output = output + '└' + '-' * (length - 2) + '┘\n\n'
+    return output
+
+def init():
+    """Initialize the module variables, read ledger, read portfolio and print balance"""
+    get_currency_pairs()
+    global ledger
+    try :
+        read_ledger()
+    except :
+        print('No ledger present yet.')
+    print_balance(True)
+
+def daily_routine():
+    """Performs a serie of functions togheter, for a daily routine. Ledger must be already present."""
+    get_currency_pairs()
+    read_ledger()
+    print_balance(True, True)
+    analyze_positions(True, True)
+
     
