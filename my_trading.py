@@ -3,8 +3,8 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.7 - 2017-10-16 - added analyze_positions()
-# added option to save output of balance and analysis to output.txt file
+### v0.8 - 2017-10-16 - added heading() to print a text with heading style
+# added adv_print() to provide advanced printing with duplicate output to output.txt
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
@@ -38,6 +38,7 @@ portfolio_total = 0 # stores the total amount of the porfolio in EUR
 ledger = [] # stores a list of movements, format: [[COIN, AMOUNT, RATE, DATE], ...]
 # e.g. [['EUR', -97.30, 1.00, '12/09/2017'], ...]
 debug_verbose = False # change to True to print some debug info when running the functions
+duplicate_output = True # allows adv_print to duplicate output to output.txt
 
 ### imports a list of currency codes and names traded in bittrex portal
 def get_currency_pairs():
@@ -410,7 +411,7 @@ def read_portfolio(verbose = 'yes_print'):
                 print('{0:6} - {1:13}| {2:10.5f}'.format(coin, currency_name(coin), amount))
     print('Portfolio read from {0}.'.format(filename));
 
-def print_balance(update = True, log_output = False):
+def print_balance(update = True):
     """Print balance of portfolio, based in Euro.
     update = True to retrieve updated exchange rates,
     update = False to use stored exchange rates."""
@@ -447,11 +448,8 @@ def print_balance(update = True, log_output = False):
               .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio)
     output = output + 'Total: € {0:7.2f}\n'.format(portfolio_total)
     if portfolio != []:
-        print(output)
+        adv_print(output)
         save_portfolio()
-        if log_output :
-            with open("Output.txt", "a") as text_file:
-                text_file.write(output)
 
 def add_entry_to_ledger(coin, amount, rate, date = ''):
     """Add an entry to the ledger. Date is in the format yyyy-mm-dd"""
@@ -518,7 +516,7 @@ def update_portfolio(single_entry = None, confirm_write = False):
             portfolio.append(rowl[0:2]+[0,0,0])
     save_portfolio()
     
-def analyze_positions(summary = 'collapsed', log_output = False):
+def analyze_positions(summary = 'collapsed'):
     """Analize the open and closed positions in the portfolio"""
     # this first version is 'collapsed' and computes a sum of all the entries
     # related to a certain currency, it does not consider each closure of a position
@@ -559,10 +557,7 @@ def analyze_positions(summary = 'collapsed', log_output = False):
             pl = rowa[1] * get_ticker(rowa[0], 'EUR') - rowa[2]
             output = output + '{0:6}- {1:13}| {2:>10.5f} | € {3:+8.2f}\n' \
                      .format(rowa[0], currency_name(rowa[0]), rowa[1], pl)
-    print(output)
-    if log_output :
-        with open("Output.txt", "a") as text_file:
-            text_file.write(output)
+    adv_print(output)
     
 def heading(text, heading_level = 1, length = 40):
     """Print a text formatted as a specific heading"""
@@ -571,6 +566,13 @@ def heading(text, heading_level = 1, length = 40):
     output = output + '| ' + text + ' ' * (length - len(text) - 3) + '|\n'
     output = output + '└' + '-' * (length - 2) + '┘\n\n'
     return output
+
+def adv_print(text):
+    global duplicate_output
+    print(text)
+    if duplicate_output:
+        with open("Output.txt", "a") as text_file:
+            text_file.write(text)
 
 def init():
     """Initialize the module variables, read ledger, read portfolio and print balance"""
@@ -586,7 +588,7 @@ def daily_routine():
     """Performs a serie of functions togheter, for a daily routine. Ledger must be already present."""
     get_currency_pairs()
     read_ledger()
-    print_balance(True, True)
-    analyze_positions(True, True)
+    print_balance(True)
+    analyze_positions(True)
 
     
