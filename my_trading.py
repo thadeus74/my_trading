@@ -3,7 +3,7 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.5 - 2017-10-15
+### v0.6 - 2017-10-16
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
@@ -17,21 +17,6 @@
 
 ### Functions are of different kind:
 ### get (from internet), print (to screen), read (from file), save (to file)
-
-### scripts and info that can help, to be reused
-# from https://www.coindesk.com/api/
-# https://api.coindesk.com/v1/bpi/historical/close.json?currency=EUR&for=yesterday
-# returns Bitcoin Price Index (bpi) in Euro in this format: {"bpi":{"2017-10-11":4073.0026},"discl...
-# https://api.coindesk.com/v1/bpi/historical/close.json?currency=EUR&start=2017-10-11&end=2017-10-11
-# returns the value for a specific date
-#
-# from https://www.bittrex.com/Home/Api
-# https://bittrex.com/api/v1.1/public/getmarketsummary?market=btc-xmr
-# returns exchange rate in this format:
-# {"success":true,"message":"","result":[{"MarketName":"BTC-XMR","High":0.01841175,"Low":0.01690000,
-# "Volume":10790.29465211,"Last":0.01696032,"BaseVolume":192.99894272,
-# "TimeStamp":"2017-10-12T10:06:43.403","Bid":0.01694034,"Ask":0.01696032,"OpenBuyOrders":1039,
-# "OpenSellOrders":6878,"PrevDay":0.01815932,"Created":"2014-06-04T07:38:39.24"}]}
 
 ### imported modules
 import requests
@@ -459,8 +444,9 @@ def print_balance(update = True):
         output = output + '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| {5:7.2f} | {6:>5.1%}\n' \
               .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio)
     output = output + 'Total: {0:7.2f} Euro\n'.format(portfolio_total)
-    print(output)
-    save_portfolio()
+    if portfolio != []:
+        print(output)
+        save_portfolio()
 
 def add_entry_to_ledger(coin, amount, rate, date = ''):
     """Add an entry to the ledger. Date is in the format yyyy-mm-dd"""
@@ -529,8 +515,11 @@ def update_portfolio(single_entry = None, confirm_write = False):
 def init():
     """Initialize the module variables, read ledger, read portfolio and print balance"""
     get_currency_pairs()
-    read_ledger()
-    read_portfolio('no_print')
+    global ledger
+    try :
+        read_ledger()
+    except :
+        print('No ledger present yet.')
     print_balance(True)
 
 def daily_routine():
