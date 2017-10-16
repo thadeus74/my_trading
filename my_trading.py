@@ -3,7 +3,8 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.6 - 2017-10-16
+### v0.7 - 2017-10-16 - added analyze_positions()
+# added option to save output of balance and analysis to output.txt file
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
@@ -14,6 +15,7 @@
 ### store temporary data in global variables, such as current and
 ### previous exchange rates, trends
 ### add an API key to retrieve info
+### create classes for entries in portfolio and ledger
 
 ### Functions are of different kind:
 ### get (from internet), print (to screen), read (from file), save (to file)
@@ -408,7 +410,7 @@ def read_portfolio(verbose = 'yes_print'):
                 print('{0:6} - {1:13}| {2:10.5f}'.format(coin, currency_name(coin), amount))
     print('Portfolio read from {0}.'.format(filename));
 
-def print_balance(update = True):
+def print_balance(update = True, log_output = False):
     """Print balance of portfolio, based in Euro.
     update = True to retrieve updated exchange rates,
     update = False to use stored exchange rates."""
@@ -433,7 +435,7 @@ def print_balance(update = True):
         row[3] = euroeq
         portfolio_total = portfolio_total + euroeq
     output = 'Portfolio Balance:\n'
-    output = output + 'Coin  - Name         |   Amount   |   Rate    |   Trend | Euro eq.| Port.%\n'
+    output = output + 'Coin  - Name         |   Amount   |   Rate    |   Trend |  Equiv.    | Port.%\n'
     for row in portfolio:
         coin = row[0]
         amount = row[1]
@@ -441,12 +443,15 @@ def print_balance(update = True):
         euroeq = row[3]
         perc_of_portfolio = euroeq / portfolio_total
         row[4] = perc_of_portfolio
-        output = output + '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| {5:7.2f} | {6:>5.1%}\n' \
+        output = output + '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| € {5:8.2f} | {6:>6.2%}\n' \
               .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio)
-    output = output + 'Total: {0:7.2f} Euro\n'.format(portfolio_total)
+    output = output + 'Total: € {0:7.2f}\n'.format(portfolio_total)
     if portfolio != []:
         print(output)
         save_portfolio()
+        if log_output :
+            with open("Output.txt", "a") as text_file:
+                text_file.write(output)
 
 def add_entry_to_ledger(coin, amount, rate, date = ''):
     """Add an entry to the ledger. Date is in the format yyyy-mm-dd"""
@@ -485,6 +490,7 @@ def update_portfolio(single_entry = None, confirm_write = False):
             print ('Portfolio not updated.')
             return;
     global portfolio
+    global ledger
     if single_entry == None:
         portfolio = []
         for rowl in ledger:
@@ -529,5 +535,50 @@ def daily_routine():
     save_rates()
     read_rates()
     show_historical('BTC')
-    
+
+def analyze_positions(summary = 'collapsed', log_output = False):
+    """Analize the open and closed positions in the portfolio"""
+    # this first version is 'collapsed' and computes a sum of all the entries
+    # related to a certain currency, it does not consider each closure of a position
+    # but only the final balance
+
+    # portfolio format: [coin, amount, rate, euroeq, percentage_of_portfolio]
+    # ledger format: [coin, amount, rate, date]
+    # analysis format: [coin, amount, euroeq, date]
+    global portfolio
+    global ledger
+    output = ''
+    analysis = []
+    for rowl in ledger:
+        coin = rowl[0]
+        found = False
+        # find the correct item in analysis
+        for rowa in analysis:
+            if rowa[0] == coin:
+                found = True
+                # update the item in analysis
+                rowa[1] = rowa[1] + rowl[1]
+                rowa[2] = rowa[2] + rowl[1] * rowl[2]
+                rowa[3] = rowl[3]
+        if found == False:
+            analysis.append(rowl[0:2]+[rowl[1] * rowl[2]] + [rowl[3]])
+    # first ouput closed positions
+    output = 'Closed positions:\n'
+    output = output + 'Coin  - Name         |   Closed   |   P/L \n'
+    for rowa in analysis:
+        if rowa[1] == 0:
+            output = output + '{0:6}- {1:13}| {2} | € {3:>+8.2f}\n' \
+                     .format(rowa[0], currency_name(rowa[0]), rowa[3], -rowa[2])
+    # the output open positions
+    output = output + '\nOpen positions:\n'
+    output = output + 'Coin  - Name         |   Amount   |   P/L \n'
+    for rowa in analysis:
+        if rowa[1] != 0:
+            pl = rowa[1] * get_ticker(rowa[0], 'EUR') - rowa[2]
+            output = output + '{0:6}- {1:13}| {2:>10.5f} | € {3:+8.2f}\n' \
+                     .format(rowa[0], currency_name(rowa[0]), rowa[1], pl)
+    print(output)
+    if log_output :
+        with open("Output.txt", "a") as text_file:
+            text_file.write(output)
     
