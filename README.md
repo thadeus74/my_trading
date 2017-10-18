@@ -26,33 +26,39 @@ preferred = ['BTC', 'XMR', 'LTC', 'XRP', 'DASH', 'BCC', 'ETH'] # first coin must
 If you want to try it first, you can copy the example ledger.csv in the same directory where you put my_trading.py.
 
         Output (either on screen or on file):
+
         ┌--------------------------------------┐
         | Portfolio Balance                    |
         └--------------------------------------┘
 
         Coin  - Name         |   Amount   |   Rate    |   Trend |  Equiv.    | Port.%
-        EUR   - Euro         |   26.30000 |    1.0000 |   +0.00%| €    26.30 |  0.55%
-        XMR   - Monero       |   10.00000 |   80.7888 |   -0.60%| €   807.89 | 17.03%
-        BTC   - Bitcoin      |    0.27000 | 4828.2252 |   +0.10%| €  1303.62 | 27.49%
-        BCC   - Bitcoin Cash |    0.00000 |  266.8333 |   -1.11%| €     0.00 |  0.00%
-        DASH  - Dash         |    5.30000 |  261.0448 |   -0.74%| €  1383.54 | 29.17%
-        XRP   - Ripple       | 5000.00000 |    0.2443 |   +8.20%| €  1221.54 | 25.76%
-        Total: € 4742.89
-
+        ---------------------+------------+-----------+---------+------------+-------
+        EUR   - Euro         |   26.30000 |    1.0000 |   +0.00%| €    26.30 |  0.61%
+        XMR   - Monero       |   10.00000 |   75.7604 |   -4.79%| €   757.60 | 17.69%
+        BTC   - Bitcoin      |    0.27000 | 4565.7261 |   -3.99%| €  1232.75 | 28.78%
+        BCC   - Bitcoin Cash |    0.00000 |  306.4972 |  +10.72%| €     0.00 |  0.00%
+        DASH  - Dash         |    5.30000 |  245.9811 |   -2.09%| €  1303.70 | 30.44%
+        XRP   - Ripple       | 5000.00000 |    0.1926 |   -9.44%| €   963.14 | 22.48%
+        Total: € 4283.49
+        
         ┌--------------------------------------┐
         | Analysis of positions                |
         └--------------------------------------┘
 
         Closed positions:
         Coin  - Name         |   Closed   |   P/L 
+        ---------------------+------------+-----------
         BCC   - Bitcoin Cash | 11/10/2017 | €  -435.80
+        Total P/L on closed positions: €  -435.80
 
         Open positions:
         Coin  - Name         |   Amount   |   P/L 
+        ---------------------+------------+-----------
         EUR   - Euro         |   26.30000 | €    +0.00
-        XMR   - Monero       |   10.00000 | €  -165.11
-        BTC   - Bitcoin      |    0.27000 | €  +314.39
-        DASH  - Dash         |    5.30000 | €  -118.87
-        XRP   - Ripple       | 5000.00000 | €  +160.92
+        XMR   - Monero       |   10.00000 | €  -215.40
+        BTC   - Bitcoin      |    0.27000 | €  +243.52
+        DASH  - Dash         |    5.30000 | €  -198.71
+        XRP   - Ripple       | 5000.00000 | €   -97.71
+        Total P/L on open positions: €  -268.30
 
 *Note*: it is possible to duplicate the output to a output.txt file, by defining global variable duplicate_output = True.
