@@ -3,8 +3,8 @@
 ########
 ### TRADING MODULE FOR CRYPTOCURRENCIES
 
-### v0.8 - 2017-10-16 - added heading() to print a text with heading style
-# added adv_print() to provide advanced printing with duplicate output to output.txt
+### v0.9 - 2017-10-18 - added total P/L on closed and open positions
+### - solved bug on adv_print()
 
 # use init() function after importing the module, to retrieve currencies and portfolio
 # use add_entry_to_ledger() function to populate the ledger
@@ -247,18 +247,21 @@ def get_current_rates(max_coins = 6, preference = False):
 
 ### print a list of currencies traded in bittrex portal
 def print_current_rates():
-	"""Print the list of currencies and rates retrieved with get_current_rates()"""
-	#
-	### variables used by function
-	global currency_rates
-	#
-	### print the last exhange values 
-	print('Below is the list of last exchange rates:')
-	for row in currency_rates :
-            coin = row[0]
-            m_coin = row[1]
-            rate = row[2]
-            print('{3:.<12}: {0:>6}-{1:3} ==> Last: {2:10.5f}'.format(coin, m_coin, rate, currency_name(coin)))
+    """Print the list of currencies and rates retrieved with get_current_rates()"""
+    #
+    ### variables used by function
+    global currency_rates
+    #
+    ### print the last exhange values 
+    output = heading ('Last exchange rates')
+    output = output + 'Coin          |  Market    | Last exchange rate\n'
+    output = output + '--------------+------------+-------------------\n'
+    for row in currency_rates :
+        coin = row[0]
+        m_coin = row[1]
+        rate = row[2]
+        output = output + '{3:.<13}| {0:>6}-{1:3} | Last: {2:10.5f}\n'.format(coin, m_coin, rate, currency_name(coin))
+    adv_print(output)
 
 def currency_name(code):
 	"""Return a currency name, given the code"""
@@ -271,7 +274,9 @@ def currency_name(code):
 def print_preferred_coins():	
     """Print a list of preferred currencies in a code name pair"""
     global preferred
-    output = ''
+    output = heading('Preferred coins')
+    output = output + 'Coin   - Name        \n'
+    output = output + '---------------------\n'
     for i in preferred:
         output = output + '{0:6} - {1:20}\n'.format(i, currency_name(i))
     print(output);
@@ -362,7 +367,9 @@ def print_preferred_trend():
     """print the trend of preferred currencies"""
     ### variables
     global preferred
-    output = 'Trend of the preferred currencies:\nCoin   - Name         |   Trend'
+    output = 'Trend of the preferred currencies:\n'
+    output = output + 'Coin   - Name        |   Trend\n'
+    output = output + '---------------------+---------\n'
     for i in preferred:
         output = output + '{0:6} - {1:13}: {2:>+7.2%}\n'.format(i, currency_name(i), trend(i))
     print(output)
@@ -371,7 +378,9 @@ def print_currencies_trend():
     """print the trend of the currencies being retrieved"""
     ### variables
     global currency_rates
-    output = 'Trend of the currencies being retrieved:\nCoin   - Name         |   Trend'
+    output = 'Trend of the currencies being retrieved:\n'
+    output = output + 'Coin   - Name        |   Trend\n'
+    output = output + '---------------------+---------\n'
     for row in currency_rates:
         i = row[0]
         output = output + '{0:6} - {1:13}: {2:>+7.2%}\n'.format(i, currency_name(i), trend(i))
@@ -396,8 +405,6 @@ def read_portfolio(verbose = 'yes_print'):
     portfolio = []
     filename = 'portfolio.csv'
     ### portfolio.csv format: coin, amount, rate, euroeq, perc_of_portfolio
-    if verbose == 'yes_print':
-        print('Portfolio:\nCoin   - Name         |   Amount')
     with open(filename, 'r', newline = '') as csvfile:
         spamreader = csv.reader(csvfile)
         for row in spamreader:
@@ -407,21 +414,19 @@ def read_portfolio(verbose = 'yes_print'):
             euroeq = eval(row[3])
             perc_of_portfolio = eval(row[4])
             portfolio.append([coin, amount, rate, euroeq, perc_of_portfolio])
-            if verbose == 'yes_print':
-                print('{0:6} - {1:13}| {2:10.5f}'.format(coin, currency_name(coin), amount))
     print('Portfolio read from {0}.'.format(filename));
 
 def print_balance(update = True):
     """Print balance of portfolio, based in Euro.
-    update = True to retrieve updated exchange rates,
-    update = False to use stored exchange rates."""
+    update = True --> retrieve updated exchange rates,
+    update = False --> use stored exchange rates."""
     # variables
     global portfolio
     global portfolio_total
     output = heading('Portfolio Balance')
     if portfolio == []:
         try :
-            read_portfolio('no_print')
+            read_portfolio()
         except :
             print('No portfolio present yet.')
     # this first iteration is to compute portofolio_total, which will be used later to compute percentage
@@ -437,6 +442,7 @@ def print_balance(update = True):
         row[3] = euroeq
         portfolio_total = portfolio_total + euroeq
     output = output + 'Coin  - Name         |   Amount   |   Rate    |   Trend |  Equiv.    | Port.%\n'
+    output = output + '---------------------+------------+-----------+---------+------------+-------\n'
     for row in portfolio:
         coin = row[0]
         amount = row[1]
@@ -478,6 +484,28 @@ def read_ledger():
             a = row[0:1]+[eval(row[1])]+[eval(row[2])]+[row[3]]
             ledger.append(a)
     print('Ledger read from {0}.'.format(filename))
+
+def print_ledger():
+    """Print ledger"""
+    # variables
+    global ledger
+    if ledger == []:
+        try :
+            read_ledger()
+        except :
+            print('No ledger present yet.')
+            return
+    output = heading('Ledger')
+    output = output + 'Coin  - Name         |   Amount   |   Rate    |   Date\n'
+    output = output + '---------------------+------------+-----------+----------\n'
+    ### ledger format: coin, amount, rate, date
+    for row in ledger:
+        coin = row[0]
+        output = output + '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4}\n' \
+              .format(coin, currency_name(coin), row[1], row[2], row[3])
+    if portfolio != []:
+        adv_print(output)
+    
 
 def update_portfolio(single_entry = None, confirm_write = False):
     """Update portfolio using ledger entries"""
@@ -522,6 +550,7 @@ def analyze_positions(summary = 'collapsed'):
     # related to a certain currency, it does not consider each closure of a position
     # but only the final balance
 
+    # variables used by this function
     # portfolio format: [coin, amount, rate, euroeq, percentage_of_portfolio]
     # ledger format: [coin, amount, rate, date]
     # analysis format: [coin, amount, euroeq, date]
@@ -529,6 +558,8 @@ def analyze_positions(summary = 'collapsed'):
     global ledger
     output = heading('Analysis of positions')
     analysis = []
+    total_closed = 0
+    total_open = 0
     for rowl in ledger:
         coin = rowl[0]
         found = False
@@ -545,24 +576,30 @@ def analyze_positions(summary = 'collapsed'):
     # first ouput closed positions
     output = output + 'Closed positions:\n'
     output = output + 'Coin  - Name         |   Closed   |   P/L \n'
+    output = output + '---------------------+------------+-----------\n'
     for rowa in analysis:
         if rowa[1] == 0:
+            total_closed = total_closed - rowa[2]
             output = output + '{0:6}- {1:13}| {2} | € {3:>+8.2f}\n' \
                      .format(rowa[0], currency_name(rowa[0]), rowa[3], -rowa[2])
-    # the output open positions
+    output = output + 'Total P/L on closed positions: € {0:>+8.2f}\n'.format(total_closed)
+    # then output open positions
     output = output + '\nOpen positions:\n'
     output = output + 'Coin  - Name         |   Amount   |   P/L \n'
+    output = output + '---------------------+------------+-----------\n'
     for rowa in analysis:
         if rowa[1] != 0:
             pl = rowa[1] * get_ticker(rowa[0], 'EUR') - rowa[2]
+            total_open = total_open + pl
             output = output + '{0:6}- {1:13}| {2:>10.5f} | € {3:+8.2f}\n' \
                      .format(rowa[0], currency_name(rowa[0]), rowa[1], pl)
+    output = output + 'Total P/L on open positions: € {0:>+8.2f}\n'.format(total_open)
     adv_print(output)
     
 def heading(text, heading_level = 1, length = 40):
     """Print a text formatted as a specific heading"""
     ### currently implemented heading level 1 only
-    output = '┌' + '-' * (length - 2) + '┐\n'
+    output = '\n┌' + '-' * (length - 2) + '┐\n'
     output = output + '| ' + text + ' ' * (length - len(text) - 3) + '|\n'
     output = output + '└' + '-' * (length - 2) + '┘\n\n'
     return output
@@ -571,7 +608,7 @@ def adv_print(text):
     global duplicate_output
     print(text)
     if duplicate_output:
-        with open("Output.txt", "a") as text_file:
+        with open("Output.txt", "a", encoding="utf-8") as text_file:
             text_file.write(text)
 
 def init():
