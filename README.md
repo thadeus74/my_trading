@@ -19,6 +19,7 @@ How to use it:
 - use update_portfolio() to update the portfolio (and save to file), based on the ledger
 - use print_balance() to print a report on the current balance of the portfolio, including trend and percentage of portfolio for each currency, translated in Euro
 - use analyze_position() to generate a report on the profit and loss for the closed and open positions (collapsed for each coin), translated in Euro
+- use best_and_worst(n) to generate a report on the 'n' extreme trend for coins against Euro (current time with respect to previous day closure)
 
 *Note*: it is also possible to define a list of preferred currencies, even if they are not in the portfolio, in the following format:
 preferred = ['BTC', 'XMR', 'LTC', 'XRP', 'DASH', 'BCC', 'ETH'] # first coin must be 'BTC'. The codes are taken from bittrex, so Bitcoin is BTC and Bitcoin Cash is BCC.
