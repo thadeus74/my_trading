@@ -13,15 +13,8 @@
 # get (from internet), print (to screen), read (from file), save (to file)
 # additional functions to duplicate print to file and to generate headers
 
-# v0.10 - 2017-10-20 - solved some bugs in print_historical()
-# - added online/offline status check, to speedup some functions
-# - improved get_ticker() so that if offline, it gets the latest coin exchange rate
-#   and add check if a coin exist in bttrex market before returning value
-# - added read_latest_rate(coin1, coin2) to look inside historical
-# - added cached_ticker(coin1, coin2) to check if in currency_rates there is already a
-#   value more recent than 15 minutes
-# - added best_and_worst() to show the extremes in trending
-# - # added date to reports
+# v0.11 - 20/10
+# - added cached_previous() to avoid requesting a data already collected
 
 # Functions to be developed:
 #
@@ -83,7 +76,7 @@ def get_currency_pairs():
         page_content = json.loads(page.content)
         result = page_content['result']
         # creating a list of pairs [coin code, name]
-        currency_pairs = [[x.get(key1, None), x.get(key2, None)] for x in result]
+        currency_pairs = [[x.get(key1, None), x.get(key2, None)[:13]] for x in result]
         currency_pairs.append(['EUR', 'Euro'])
         # creating a list of coin codes
         currency_codes = [x.get(key1, None) for x in result]
@@ -211,6 +204,21 @@ def get_ticker(coin1, coin2 = 'EUR'):
     else :
         return 0;
 
+def cached_previous(coin1, coin2 = 'EUR'):
+    """check if there is in cache a value for the previous day closure"""
+    #variables
+    global currency_rates
+    # currency_rates format: [[coin1, coin2, rate, current_date, current_time], ...]
+    yesterday=(datetime.date.today()-datetime.timedelta(1)).isoformat()
+    for row in currency_rates:
+        if row[3] == yesterday:
+            if row[0] == coin1:
+                if row[1] == coin2:
+                    # print (coin1,coin2,'cached')
+                    return row[2]
+    # print (coin1,coin2,'not cached yet')
+    return 0        
+
 ### get the previous day exchange rate for a pair of currencies
 def get_previous_day(coin1, coin2 = 'EUR'):
     """Get the previous day closure exchange rate for a pair of currencies,
@@ -222,6 +230,14 @@ def get_previous_day(coin1, coin2 = 'EUR'):
     global internet_state
     if internet_state == 'offline':
         return 0
+    #check if already cached
+    c = cached_previous(coin1,coin2)
+    if c:
+        return c
+    # variables
+    global currency_rates
+    yesterday = (datetime.date.today()-datetime.timedelta(1)).isoformat()
+    # check coins
     if coin2 == 'EUR' :
         if coin1 == 'BTC' :
             ## retrieve Bitcoin to Euro exchange rate from coindesk.com
@@ -234,8 +250,8 @@ def get_previous_day(coin1, coin2 = 'EUR'):
             else :
                 page_content = json.loads(page.content)
                 info = page_content.get('bpi')
-                yesterday=(datetime.date.today()-datetime.timedelta(1)).isoformat()
                 info = info.get(yesterday, None)
+                currency_rates.append([coin1, coin2, info, yesterday, '23:59:59'])
                 return info
         else :
             return get_previous_day(coin1, 'BTC') * get_previous_day('BTC', coin2);
@@ -251,7 +267,9 @@ def get_previous_day(coin1, coin2 = 'EUR'):
             success = page_content['success']
             if success :
                 ticker = page_content['result'][0]
-                return ticker.get('PrevDay', None)
+                info = ticker.get('PrevDay', None)
+                currency_rates.append([coin1, coin2, info, yesterday, '23:59:59'])
+                return info
             else :
                 return 0
     else :
@@ -730,26 +748,26 @@ def best_and_worst(n = 5):
         coin = c[0]
         currency_trends.append([trend(coin), coin])
         i=i+1
-        if divmod(i,10) == 0:
+        if divmod(i,10)[1] == 0:
             print(i,end=' ')
     currency_trends.sort()
     currency_trends.reverse()
     output = heading('Best and worst trends (1D)')
     output += 'Date: {0}\n'.format(datetime.date.today().isoformat())
     output += 'Best trending coins:\n'
-    output += 'Coin   | Name          |   Trend\n'
-    output += '-------+---------------+------------\n'
+    output += 'Coin   | Name         |   Trend\n'
+    output += '-------+--------------+------------\n'
     for c in range(n):
         i = currency_trends[c]
-        output += '{0:6} | {1:14}| {2:>+10.2%}\n'.format(i[1], currency_name(i[1]), i[0])
-    output += '-------+---------------+------------\n'
+        output += '{0:6} | {1:13}| {2:>+10.2%}\n'.format(i[1], currency_name(i[1]), i[0])
+    output += '-------+--------------+------------\n'
     output += 'Worst trending coins:\n'
-    output += 'Coin   | Name          |   Trend\n'
-    output += '-------+---------------+------------\n'
+    output += 'Coin   | Name         |   Trend\n'
+    output += '-------+--------------+------------\n'
     for c in range(len(currency_trends)-n,len(currency_trends)):
         i = currency_trends[c]
-        output += '{0:6} | {1:14}| {2:>+10.2%}\n'.format(i[1], currency_name(i[1]), i[0])
-    output += '-------+---------------+------------\n'
+        output += '{0:6} | {1:13}| {2:>+10.2%}\n'.format(i[1], currency_name(i[1]), i[0])
+    output += '-------+--------------+------------\n'
     adv_print(output)
 
 def heading(text, heading_level = 1, length = 40):
