@@ -11,9 +11,35 @@
  returns the value for a specific date (use the same start and end) in this format:
  {"bpi":{"2017-10-10":4026.5737,"2017-10-11":4073.0026},"disclaimer":"This data was produced from the CoinDesk Bitcoin Price Index. BPI value data returned as EUR.","time":{"updated":"Oct 12, 2017 00:03:00 UTC","updatedISO":"2017-10-12T00:03:00+00:00"}}
 
----
+--------------
 - From https://www.bittrex.com/Home/Api
 
 -- https://bittrex.com/api/v1.1/public/getmarketsummary?market=btc-xmr
  returns exchange rate in this format:
  {"success":true,"message":"","result":[{"MarketName":"BTC-XMR","High":0.01841175,"Low":0.01690000, "Volume":10790.29465211,"Last":0.01696032,"BaseVolume":192.99894272, "TimeStamp":"2017-10-12T10:06:43.403","Bid":0.01694034,"Ask":0.01696032,"OpenBuyOrders":1039, "OpenSellOrders":6878,"PrevDay":0.01815932,"Created":"2014-06-04T07:38:39.24"}]}
+ 
+---------------
+- from https://api.coinmarketcap.com/
+
+-- https://api.coinmarketcap.com/v1/ticker/?convert=EUR
+ returns coin info in the following format:
+[
+    {
+        "id": "bitcoin", 
+        "name": "Bitcoin", 
+        "symbol": "BTC", 
+        "rank": "1", 
+        "price_usd": "6084.09", 
+        "price_btc": "1.0", 
+        "24h_volume_usd": "2657750000.0", 
+        "market_cap_usd": "101219557317", 
+        "available_supply": "16636762.0", 
+        "total_supply": "16636762.0", 
+        "percent_change_1h": "-0.2", 
+        "percent_change_24h": "7.63", 
+        "percent_change_7d": "7.44", 
+        "last_updated": "1508573954", 
+        "price_eur": "5164.52238513", 
+        "24h_volume_eur": "2256049691.75", 
+        "market_cap_eur": "85920929765.0"
+    }, ... ] 
