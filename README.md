@@ -32,6 +32,7 @@ If you want to try it first, you can copy the example ledger.csv in the same dir
         | Portfolio Balance                    |
         └--------------------------------------┘
 
+        Date: 2017-10-10
         Coin  - Name         |   Amount   |   Rate    |   Trend |  Equiv.    | Port.%
         ---------------------+------------+-----------+---------+------------+-------
         EUR   - Euro         |   26.30000 |    1.0000 |   +0.00%| €    26.30 |  0.61%
@@ -40,16 +41,19 @@ If you want to try it first, you can copy the example ledger.csv in the same dir
         BCC   - Bitcoin Cash |    0.00000 |  306.4972 |  +10.72%| €     0.00 |  0.00%
         DASH  - Dash         |    5.30000 |  245.9811 |   -2.09%| €  1303.70 | 30.44%
         XRP   - Ripple       | 5000.00000 |    0.1926 |   -9.44%| €   963.14 | 22.48%
+        ---------------------+------------+-----------+---------+------------+-------
         Total: € 4283.49
         
         ┌--------------------------------------┐
         | Analysis of positions                |
         └--------------------------------------┘
 
+        Date: 2017-10-10
         Closed positions:
         Coin  - Name         |   Closed   |   P/L 
         ---------------------+------------+-----------
         BCC   - Bitcoin Cash | 11/10/2017 | €  -435.80
+        ---------------------+------------+-----------
         Total P/L on closed positions: €  -435.80
 
         Open positions:
@@ -60,6 +64,31 @@ If you want to try it first, you can copy the example ledger.csv in the same dir
         BTC   - Bitcoin      |    0.27000 | €  +243.52
         DASH  - Dash         |    5.30000 | €  -198.71
         XRP   - Ripple       | 5000.00000 | €   -97.71
+        ---------------------+------------+-----------
         Total P/L on open positions: €  -268.30
+        
+        ┌--------------------------------------┐
+        | Best and worst trends (1D)           |
+        └--------------------------------------┘
+
+        Date: 2017-10-21
+        Best trending coins:
+        Coin   | Name         |   Trend
+        -------+--------------+------------
+        SLR    | SolarCoin    |    +34.41%
+        SPHR   | Sphere       |    +25.37%
+        VTC    | Vertcoin     |    +20.57%
+        SPR    | SpreadCoin   |    +19.52%
+        DNT    | district0x   |    +14.37%
+        -------+--------------+------------
+        Worst trending coins:
+        Coin   | Name         |   Trend
+        -------+--------------+------------
+        COVAL  | Circuits of V|    -15.50%
+        IOP    | Internet Of P|    -15.64%
+        PTOY   | Patientory   |    -16.69%
+        XWC    | WhiteCoin    |    -19.43%
+        TKS    | Tokes        |    -22.72%
+        -------+--------------+------------
 
 *Note*: it is possible to duplicate the output to a output.txt file, by defining global variable duplicate_output = True.
