@@ -4,26 +4,11 @@
 # TRADING MODULE FOR CRYPTOCURRENCIES
 ##################
 #
-# HOW TO USE THIS MODULE:
-# use init() function after importing the module, to retrieve currencies and portfolio
-# use add_entry_to_ledger() function to populate the ledger
-# use update_portfolio() function to update the portfolio, based on the ledger
-#
-# Functions are of different kind:
-# get (from internet), print (to screen), read (from file), save (to file)
-# additional functions to duplicate print to file and to generate headers
+# HOW TO USE THIS MODULE: read README.md
 
-# v0.11 - 20/10
-# - added cached_previous() to avoid requesting a data already collected
-
-# Functions to be developed:
-#
-# historical.csv could get very big, so it should store values of a specific period (e.g. month)
-# store temporary data in global variables, such as current and
-# previous exchange rates, trends
-# add an API key to retrieve info
-# create classes for entries in portfolio and ledger
-# it might be useful to have also yesterday trend
+# v0.12 - 22/10
+# - added get_coinmarketcap() that is a large database of updated trading info
+# - added analyze_coinmarketcap() that provides information on the best trending coins
 
 # imported modules used in the functions of this module
 import requests
@@ -34,7 +19,8 @@ import datetime
 
 # global variables defined here can be modified:
 # note that the codes are taken from bittrex, so Bitcoin is BTC and Bitcoin Cash is BCC
-preferred = ['BTC', 'XMR', 'LTC', 'XRP', 'DASH', 'BCC', 'ETH'] # first coin must be 'BTC'
+preferred = ['BTC', 'XMR', 'LTC', 'XRP', 'DASH', 'ETH', 'XLM', 'MCO',
+             'SALT', 'TX', 'NAV', 'ZEN', 'VTC'] # first coin must be 'BTC'
 duplicate_output = True # allows adv_print to duplicate output to output.txt
 
 # global variables defined here are used to store temporary data for the functions:
@@ -47,9 +33,101 @@ portfolio_total = 0 # stores the total amount of the porfolio in EUR
 ledger = [] # stores a list of movements, format: [[COIN, AMOUNT, RATE, DATE], ...]
 # e.g. [['EUR', -97.30, 1.00, '12/09/2017'], ...]
 currency_trends = [] # format [[trend, coin], ...]
+coinmarketcap_db = []
+keys = ['symbol', 'name', 'price_eur', 'percent_change_1h',
+        'percent_change_24h', 'percent_change_7d', '24h_volume_eur',
+        'market_cap_eur', 'volatility', 'is_exc_bittrex']
 r_coin = 'BTC'
 m_coin = 'EUR'
+b_fee = 0.0016
+s_fee = 0.0026
 internet_state = 'online'
+
+def get_coinmarketcap():
+    """Get the updated information base from coinmarketcap.com"""
+    # variables used by function
+    global keys 
+    global coinmarketcap_db
+    coinmarketcap_db = []
+    url='https://api.coinmarketcap.com/v1/ticker/?convert=EUR'
+    # check if online or offline
+    global internet_state
+    if internet_state == 'offline':
+        return
+    # retrieving currency list
+    try :
+        page = requests.get(url)
+    except :
+        print('\nCurrently cannot get currencies from coinmakretcap.com, thus going to offline mode.com\n')
+        internet_state = 'offline'
+        return
+    else :
+        page_content = json.loads(page.content)
+        filename = 'coinmarketcap_db.csv'
+        with open(filename, 'w', newline = '') as csvfile:
+            spamwriter = csv.writer(csvfile)
+            # keys format: ['symbol', 'name', 'price_eur', 'percent_change_1h',
+            # 'percent_change_24h', 'percent_change_7d', '24h_volume_eur',
+            # 'market_cap_eur', 'volatility', 'is_exc_bittrex']
+            spamwriter.writerow(keys)
+            for x in page_content:
+                # creating a row
+                row = [x.get(y) for y in keys]
+                if row[7] != None and row[6] != None:
+                    row[8] = str(eval(row[6])/eval(row[7]))
+                    if currency_name(row[0]) != 'No match':
+                        row[9] = '1'
+                    else:
+                        row[9] = '0'
+                    coinmarketcap_db.append(row)
+                    spamwriter.writerow(row)
+        print('{0} coin info written to {1}'.format(len(coinmarketcap_db), filename))
+
+def analize_coinmarketcap():
+    """Performs analysis of info taken from coinmarketcap database,
+    applying relevant filters to extract interesting coins."""
+    # variables used by function
+    global keys 
+    global coinmarketcap_db
+    # if not yet retrieved, retrieve info from website API
+    if coinmarketcap_db == []:
+        get_coinmarketcap()
+    # keys format: ['symbol', 'name', 'price_eur', 'percent_change_1h',
+    # 'percent_change_24h', 'percent_change_7d', '24h_volume_eur',
+    # 'market_cap_eur', 'volatility', 'is_exc_bittrex']
+    #
+    # heading of output
+    # loop through coinmarketcap_db
+    # apply filters: trends > 0, market_cap > 10M EUR, volatility > 1%,
+    # is_exc_bittrex
+    # if all([trend_1h > 0, trend_24h > 0, ...]) then add to output
+    # print output
+    output = heading('Analysis of coinmarketcap')
+    output += 'Date: {0}\n'.format(datetime.date.today().isoformat())
+    output += 'Best trending coins:\n'
+    output += 'Coin   | Name         | Trend (1h) | Trend (1D) | Trend (7D)  \n'
+    output += '-------+--------------+------------+------------+-------------\n'
+    for c in coinmarketcap_db:
+        try:
+            if all([eval(c[3])>0, eval(c[4])>0, eval(c[5])>0,
+                    eval(c[7])>10000000, eval(c[8])>0.01, eval(c[9])==1]):
+                output += '{0:6} | {1:13}| {2:>+10.2%} | {3:>+10.2%} | {4:>+10.2%}\n' \
+                          .format(c[0], currency_name(c[0]), eval(c[3])/100, eval(c[4])/100, eval(c[5])/100)
+        except:
+            a = 0
+    output += '-------+--------------+------------+------------+-------------\n'
+    adv_print(output)
+    
+def buy_coin(coin1, coin2 = 'EUR'):
+    """Function to buy one coin, create entry in ledger and update portfolio"""
+    ### !!!! STILL TO BE DEVELOPED !!!!
+    # use b_fee
+    # retrieve ticker
+    # apply fee to compute eur to be removed
+    # create entry to ledger adding coin
+    # create entry to ledger removing eur
+    # update portfolio
+    pass  
 
 ### imports a list of currency codes and names traded in bittrex portal
 def get_currency_pairs():
@@ -69,14 +147,14 @@ def get_currency_pairs():
     try :
         page = requests.get(url)
     except :
-        print('\nCurrently cannot get currencies from bittrex.com\n')
+        print('\nCurrently cannot get currencies from bittrex.com, thus going to offline mode.\n')
         internet_state = 'offline'
         read_currency_pairs()
     else :
         page_content = json.loads(page.content)
         result = page_content['result']
         # creating a list of pairs [coin code, name]
-        currency_pairs = [[x.get(key1, None), x.get(key2, None)[:13]] for x in result]
+        currency_pairs = [[x.get(key1), x.get(key2)[:13]] for x in result]
         currency_pairs.append(['EUR', 'Euro'])
         # creating a list of coin codes
         currency_codes = [x.get(key1, None) for x in result]
@@ -131,10 +209,10 @@ def cached_ticker(coin1, coin2 = 'EUR'):
                 if row[1] == coin2:
                     a = row[4]
                     try:
-                        b = eval(a[0:2])*60*60+eval(a[3:5])*60+eval(a[6:8])-900
+                        b = eval(a[0:2])*60*60+eval(a[3:5])*60+eval(a[6:8])+900
                     except:
                         b = 86400
-                    if current_sec > b:
+                    if current_sec < b:
                         return row[2]
     return 0        
 
@@ -739,11 +817,12 @@ def best_and_worst(n = 5):
         return 
     # variables
     global currency_trends
+    global currency_rates
     currency_trends = [] # format [[trend, coin], ...]
     i=0
     l=0
     l=len(currency_pairs)
-    print ('...computing trend of {0} coins...'.format(l))
+    print ('...computing trend of {0} coins, this action may take few minutes...'.format(l))
     for c in currency_pairs:
         coin = c[0]
         currency_trends.append([trend(coin), coin])
