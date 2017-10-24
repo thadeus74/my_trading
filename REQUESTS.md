@@ -1,5 +1,6 @@
 # Put here requests about new functions to be developed, information to be extracted or existing functions to be modified
 
+- inside analyze_coinmarketcap() order the output
 - remove coins not owned anymore from the balance sheet
 - check if "IsActive":false on currency_pairs when retrieving coin codes and names
 - more than one portfolio (thus operations should be referred to a portfolio id or sequence number)
