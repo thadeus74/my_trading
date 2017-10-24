@@ -1,4 +1,4 @@
-# Useful information to retrieve live information from internet websites
+# Useful information from API of internet websites
 
 # scripts and info that can help:
 
@@ -13,6 +13,9 @@
 
 --------------
 - From https://www.bittrex.com/Home/Api
+
+-- https://bittrex.com/api/v1.1/public/getcurrencies
+returns con code and name
 
 -- https://bittrex.com/api/v1.1/public/getmarketsummary?market=btc-xmr
  returns exchange rate in this format:
