@@ -6,9 +6,9 @@
 #
 # HOW TO USE THIS MODULE: read README.md
 
-# v0.12 - 22/10
-# - added get_coinmarketcap() that is a large database of updated trading info
-# - added analyze_coinmarketcap() that provides information on the best trending coins
+# v0.14 - 25/10
+# - added option to print_balance(), not to show coins not owned anymore
+# - added key 'operation' to ledger
 
 # imported modules used in the functions of this module
 import requests
@@ -30,13 +30,14 @@ currency_codes = [] # stores coin codes, format:[coin1, coin2, ...]
 currency_cache = [] # format [[code, name, current, previous, trend], ...]
 portfolio = [] # stores a list of coins in the portfolio, format: [[coin, amount, rate, euroeq, percentage_of_portfolio], ...]
 portfolio_total = 0 # stores the total amount of the porfolio in EUR
-ledger = [] # stores a list of movements, format: [[COIN, AMOUNT, RATE, DATE], ...]
+ledger = [] # stores a list of movements
+ledger_keys = ['coin', 'amount', 'rate', 'date', 'operation']
 # e.g. [['EUR', -97.30, 1.00, '12/09/2017'], ...]
 currency_trends = [] # format [[trend, coin], ...]
 coinmarketcap_db = []
-keys = ['symbol', 'name', 'price_eur', 'percent_change_1h',
+coinmarketcap_keys = ['symbol', 'name', 'price_eur', 'percent_change_1h',
         'percent_change_24h', 'percent_change_7d', '24h_volume_eur',
-        'market_cap_eur', 'volatility', 'is_exc_bittrex']
+        'market_cap_eur', 'volume_percent', 'is_exc_bittrex']
 r_coin = 'BTC'
 m_coin = 'EUR'
 b_fee = 0.0016
@@ -46,7 +47,7 @@ internet_state = 'online'
 def get_coinmarketcap():
     """Get the updated information base from coinmarketcap.com"""
     # variables used by function
-    global keys 
+    global coinmarketcap_keys 
     global coinmarketcap_db
     coinmarketcap_db = []
     url='https://api.coinmarketcap.com/v1/ticker/?convert=EUR'
@@ -66,13 +67,13 @@ def get_coinmarketcap():
         filename = 'coinmarketcap_db.csv'
         with open(filename, 'w', newline = '') as csvfile:
             spamwriter = csv.writer(csvfile)
-            # keys format: ['symbol', 'name', 'price_eur', 'percent_change_1h',
+            # coinmarketcap_keys format: ['symbol', 'name', 'price_eur', 'percent_change_1h',
             # 'percent_change_24h', 'percent_change_7d', '24h_volume_eur',
-            # 'market_cap_eur', 'volatility', 'is_exc_bittrex']
-            spamwriter.writerow(keys)
+            # 'market_cap_eur', 'volume_percent', 'is_exc_bittrex']
+            spamwriter.writerow(coinmarketcap_keys)
             for x in page_content:
                 # creating a row
-                row = [x.get(y) for y in keys]
+                row = [x.get(y) for y in coinmarketcap_keys]
                 if row[7] != None and row[6] != None:
                     row[8] = str(eval(row[6])/eval(row[7]))
                     if currency_name(row[0]) != 'No match':
@@ -83,39 +84,39 @@ def get_coinmarketcap():
                     spamwriter.writerow(row)
         print('{0} coin info written to {1}'.format(len(coinmarketcap_db), filename))
 
-def analize_coinmarketcap():
+def analyze_coinmarketcap():
     """Performs analysis of info taken from coinmarketcap database,
     applying relevant filters to extract interesting coins."""
     # variables used by function
-    global keys 
+    global coinmarketcap_keys 
     global coinmarketcap_db
     # if not yet retrieved, retrieve info from website API
     if coinmarketcap_db == []:
         get_coinmarketcap()
-    # keys format: ['symbol', 'name', 'price_eur', 'percent_change_1h',
+    # coinmarketcap_keys format: ['symbol', 'name', 'price_eur', 'percent_change_1h',
     # 'percent_change_24h', 'percent_change_7d', '24h_volume_eur',
-    # 'market_cap_eur', 'volatility', 'is_exc_bittrex']
+    # 'market_cap_eur', 'volume_percent', 'is_exc_bittrex']
     #
     # heading of output
     # loop through coinmarketcap_db
-    # apply filters: trends > 0, market_cap > 10M EUR, volatility > 1%,
+    # apply filters: trends > 0, market_cap > 10M EUR, volume% > 1%,
     # is_exc_bittrex
     # if all([trend_1h > 0, trend_24h > 0, ...]) then add to output
     # print output
     output = heading('Analysis of coinmarketcap')
     output += 'Date: {0}\n'.format(datetime.date.today().isoformat())
     output += 'Best trending coins:\n'
-    output += 'Coin   | Name         | Trend (1h) | Trend (1D) | Trend (7D)  \n'
-    output += '-------+--------------+------------+------------+-------------\n'
+    output += 'Coin   | Name         | Trend (1h) | Trend (1D) | Trend (7D) |  Volume %\n'
+    output += '-------+--------------+------------+------------+------------+-----------\n'
     for c in coinmarketcap_db:
         try:
             if all([eval(c[3])>0, eval(c[4])>0, eval(c[5])>0,
                     eval(c[7])>10000000, eval(c[8])>0.01, eval(c[9])==1]):
-                output += '{0:6} | {1:13}| {2:>+10.2%} | {3:>+10.2%} | {4:>+10.2%}\n' \
-                          .format(c[0], currency_name(c[0]), eval(c[3])/100, eval(c[4])/100, eval(c[5])/100)
+                output += '{0:6} | {1:13}| {2:>+10.2%} | {3:>+10.2%} | {4:>+10.2%} | {5:>+10.2%}\n' \
+                          .format(c[0], currency_name(c[0]), eval(c[3])/100, eval(c[4])/100, eval(c[5])/100, eval(c[8]))
         except:
             a = 0
-    output += '-------+--------------+------------+------------+-------------\n'
+    output += '-------+--------------+------------+------------+------------+-----------\n'
     adv_print(output)
     
 def buy_coin(coin1, coin2 = 'EUR'):
@@ -619,7 +620,7 @@ def read_portfolio(verbose = 'yes_print'):
             portfolio.append([coin, amount, rate, euroeq, perc_of_portfolio])
     print('Portfolio read from {0}.'.format(filename));
 
-def print_balance(update = True):
+def print_balance(update = True, zero_positions = False):
     """Print balance of portfolio, based in Euro.
     update = True --> retrieve updated exchange rates,
     update = False --> use stored exchange rates."""
@@ -657,26 +658,27 @@ def print_balance(update = True):
     for row in portfolio:
         coin = row[0]
         amount = row[1]
-        rate = row[2]
-        euroeq = row[3]
-        perc_of_portfolio = euroeq / portfolio_total
-        row[4] = perc_of_portfolio
-        output += '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| € {5:8.2f} | {6:>6.2%}\n' \
-              .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio)
+        if amount != 0 or zero_positions:
+            rate = row[2]
+            euroeq = row[3]
+            perc_of_portfolio = euroeq / portfolio_total
+            row[4] = perc_of_portfolio
+            output += '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4:>+8.2%}| € {5:8.2f} | {6:>6.2%}\n' \
+                  .format(coin, currency_name(coin), amount, rate, trend(coin), euroeq, perc_of_portfolio)
     output += '---------------------+------------+-----------+---------+------------+-------\n'
     output += 'Total: € {0:7.2f}\n'.format(portfolio_total)
     if portfolio != []:
         adv_print(output)
         save_portfolio()
 
-def add_entry_to_ledger(coin, amount, rate, date = ''):
+def add_entry_to_ledger(coin, amount, rate, date = '', operation = 'default'):
     """Add an entry to the ledger. Date is in the format yyyy-mm-dd"""
     # variables
     filename = 'ledger.csv'
     if date == '':
         date = datetime.date.today().isoformat()
-    ### ledger.csv format: coin, amount, rate, date
-    rowl = [coin.upper(), amount, rate, date]
+    ### ledger.csv format: coin, amount, rate, date, operation
+    rowl = [coin.upper(), amount, rate, date, operation]
     with open(filename, 'a', newline = '') as csvfile :
         spamwriter = csv.writer(csvfile)
         spamwriter.writerow(rowl)
@@ -689,12 +691,16 @@ def read_ledger():
     global ledger
     ledger = []
     filename = 'ledger.csv'
-    ### ledger.csv format: coin, amount, rate, date
+    ### ledger.csv format: coin, amount, rate, date, operation
     with open(filename, 'r', newline = '') as csvfile:
         spamreader = csv.reader(csvfile)
+        first_row = True
         for row in spamreader:
-            a = row[0:1]+[eval(row[1])]+[eval(row[2])]+[row[3]]
-            ledger.append(a)
+            if first_row != True:
+                a = row[0:1]+[eval(row[1])]+[eval(row[2])]+[row[3]]+[row[4]]
+                ledger.append(a)
+            else:
+                first_row = False
     print('Ledger read from {0}.'.format(filename))
 
 def print_ledger():
@@ -706,14 +712,14 @@ def print_ledger():
             print('No ledger present yet.')
             return
     output = heading('Ledger')
-    output += 'Coin  - Name         |   Amount   |   Rate    |   Date\n'
-    output += '---------------------+------------+-----------+----------\n'
+    output += 'Coin  - Name         |   Amount   |   Rate    |   Date     | Operation\n'
+    output += '---------------------+------------+-----------+------------+----------\n'
     ### ledger format: coin, amount, rate, date
     for row in ledger:
         coin = row[0]
-        output += '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4}\n' \
-              .format(coin, currency_name(coin), row[1], row[2], row[3])
-    output += '---------------------+------------+-----------+----------\n'
+        output += '{0:6}- {1:13}| {2:10.5f} | {3:9.4f} | {4} | {5}\n' \
+              .format(coin, currency_name(coin), row[1], row[2], row[3], row[4])
+    output += '---------------------+------------+-----------+------------+----------\n'
     if ledger != []:
         adv_print(output)
 
@@ -879,5 +885,7 @@ def daily_routine():
     read_ledger()
     print_balance(True)
     analyze_positions(True)
-
+    analyze_coinmarketcap() #it also performs get_coinmarketcap()
+    print_preferred_trend()
+    save_rates()
     
