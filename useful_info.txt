@@ -12,6 +12,11 @@
  {"bpi":{"2017-10-10":4026.5737,"2017-10-11":4073.0026},"disclaimer":"This data was produced from the CoinDesk Bitcoin Price Index. BPI value data returned as EUR.","time":{"updated":"Oct 12, 2017 00:03:00 UTC","updatedISO":"2017-10-12T00:03:00+00:00"}}
 
 --------------
+FROM coinbase 
+
+-- https://api.coinbase.com/v2/exchange-rates (NOT YET USED)
+
+--------------
 - From https://www.bittrex.com/Home/Api
 
 -- https://bittrex.com/api/v1.1/public/getcurrencies
